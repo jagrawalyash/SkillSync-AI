@@ -162,18 +162,33 @@
         <!-- Deploy Page -->
         <section id="deploy" class="page">
             <div class="container mx-auto px-6 py-12">
-                <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
-                    <h2 class="text-3xl font-bold text-center mb-2">Find & Deploy Talent</h2>
-                    <p class="text-center text-gray-500 mb-8">Enter project requirements to find the best-fit associates.</p>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <input id="skillInput" type="text" placeholder="Required Skill (e.g., Python, AI)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                        <input id="domainInput" type="text" placeholder="Domain (e.g., Fintech)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                        <button id="findBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">Find Associates</button>
-                    </div>
+                <div class="max-w-5xl mx-auto">
+                    <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
+                        <h2 class="text-3xl font-bold text-center mb-2">Find & Deploy Talent</h2>
+                        <p class="text-center text-gray-500 mb-8">Enter project requirements or select an open role to find the best-fit associates.</p>
+                        
+                        <!-- Search Inputs -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+                            <input id="skillInput" type="text" placeholder="Required Skill (e.g., Python, AI)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                            <input id="domainInput" type="text" placeholder="Domain (e.g., Fintech)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                            <button id="findBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">Find Associates</button>
+                        </div>
 
-                    <div id="results-container" class="mt-8 space-y-4">
-                        <p id="results-placeholder" class="text-center text-gray-400">Recommendations will appear here...</p>
+                        <!-- Open Roles & Search Results -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="lg:col-span-1">
+                                <h3 class="text-xl font-semibold mb-4">High-Priority Open Roles</h3>
+                                <div id="open-roles-container" class="space-y-3">
+                                    <!-- JS will populate this -->
+                                </div>
+                            </div>
+                            <div id="results-wrapper" class="lg:col-span-2">
+                                <h3 class="text-xl font-semibold mb-4">Recommendations</h3>
+                                <div id="results-container" class="space-y-4">
+                                    <p id="results-placeholder" class="text-center text-gray-400 p-8 border-2 border-dashed rounded-lg">Search results will appear here...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -237,6 +252,12 @@
                 { id: 'proj-002', name: 'Project Titan (AI Platform)', assignedAssociates: [] },
                 { id: 'proj-003', name: 'Project Nebula (Cloud Migration)', assignedAssociates: [] }
             ];
+            
+            const openRoles = [
+                { title: 'AI Engineer', project: 'Project Titan', requiredSkill: 'AI' },
+                { title: 'Cloud Architect', project: 'Project Nebula', requiredSkill: 'AWS' },
+                { title: 'Frontend Developer', project: 'Project Phoenix', requiredSkill: 'React' }
+            ];
 
             const marketDemandSkills = ['GenAI', 'Cloud Security', 'Quantum Computing', 'Data Engineering'];
             let associateToDeployId = null;
@@ -264,11 +285,13 @@
                     if (pageId === 'associates') renderAllAssociates();
                     if (pageId === 'dashboard') renderDashboard();
                     if (pageId === 'projects') renderProjectsPage();
+                    if (pageId === 'deploy') renderOpenRoles();
                 });
             });
             
             // --- Deploy Page & Modal Logic ---
             const findBtn = document.getElementById('findBtn');
+            const skillInput = document.getElementById('skillInput');
             const resultsContainer = document.getElementById('results-container');
             const resultsPlaceholder = document.getElementById('results-placeholder');
             const deployModal = document.getElementById('deployModal');
@@ -278,21 +301,25 @@
             const projectSelector = document.getElementById('projectSelector');
 
             findBtn.addEventListener('click', () => {
+                performSearch(skillInput.value);
+            });
+
+            function performSearch(skillQuery) {
                 findBtn.textContent = 'Searching...';
                 findBtn.disabled = true;
                 resultsContainer.innerHTML = '';
                 if(resultsPlaceholder) resultsPlaceholder.style.display = 'none';
 
                 setTimeout(() => {
-                    const skillQuery = document.getElementById('skillInput').value.toLowerCase();
+                    const query = skillQuery.toLowerCase();
                     const filteredAssociates = mockAssociates
-                        .filter(a => skillQuery === '' || a.skills.some(s => s.toLowerCase().includes(skillQuery)))
+                        .filter(a => query === '' || a.skills.some(s => s.toLowerCase().includes(query)))
                         .sort((a, b) => b.match - a.match);
                     renderSearchResults(filteredAssociates);
                     findBtn.textContent = 'Find Associates';
                     findBtn.disabled = false;
                 }, 1000);
-            });
+            }
 
             function renderSearchResults(associates) {
                 resultsContainer.innerHTML = '';
@@ -312,10 +339,35 @@
                         resultsContainer.appendChild(card);
                     });
                 } else {
-                    resultsContainer.innerHTML = '<p class="text-center text-gray-500">No associates found with that skill.</p>';
+                    resultsContainer.innerHTML = '<p class="text-center text-gray-500 p-8 border-2 border-dashed rounded-lg">No associates found with that skill.</p>';
                 }
             }
             
+            function renderOpenRoles() {
+                const container = document.getElementById('open-roles-container');
+                container.innerHTML = '';
+                openRoles.forEach(role => {
+                    const roleCard = document.createElement('div');
+                    roleCard.className = 'card p-4 flex justify-between items-center';
+                    roleCard.innerHTML = `
+                        <div>
+                            <p class="font-semibold">${role.title}</p>
+                            <p class="text-sm text-gray-500">${role.project}</p>
+                        </div>
+                        <button class="find-role-btn bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-semibold hover:bg-indigo-200" data-skill="${role.requiredSkill}">Find</button>
+                    `;
+                    container.appendChild(roleCard);
+                });
+            }
+
+            document.addEventListener('click', e => {
+                if (e.target.classList.contains('find-role-btn')) {
+                    const skill = e.target.getAttribute('data-skill');
+                    skillInput.value = skill;
+                    performSearch(skill);
+                }
+            });
+
             function openDeployModal(associateId) {
                 associateToDeployId = associateId;
                 const associate = mockAssociates.find(a => a.id === associateId);
@@ -351,9 +403,7 @@
                     }
                     
                     closeDeployModal();
-                    const skillQuery = document.getElementById('skillInput').value.toLowerCase();
-                    const filteredAssociates = mockAssociates.filter(a => skillQuery === '' || a.skills.some(s => s.toLowerCase().includes(skillQuery))).sort((a, b) => b.match - a.match);
-                    renderSearchResults(filteredAssociates);
+                    performSearch(skillInput.value);
                 }
             });
 
@@ -367,8 +417,7 @@
             // --- Impact Metrics Logic ---
             function updateImpactMetrics() {
                 impactMetrics.deployments++;
-                // Simple calculation for demo purposes
-                impactMetrics.costSavings += 5000 + Math.floor(Math.random() * 2000); // Base saving + random factor
+                impactMetrics.costSavings += 5000 + Math.floor(Math.random() * 2000);
                 impactMetrics.hoursSaved += 8;
                 impactMetrics.successUplift = Math.min(100, impactMetrics.successUplift + 2);
 
@@ -380,7 +429,6 @@
                 hoursEl.textContent = impactMetrics.hoursSaved;
                 successEl.textContent = `${impactMetrics.successUplift}%`;
 
-                // Animate the update
                 [costEl, hoursEl, successEl].forEach(el => {
                     el.classList.add('updated');
                     setTimeout(() => el.classList.remove('updated'), 500);
@@ -444,6 +492,7 @@
 
             // Initial render for the default page
             renderDashboard();
+            renderOpenRoles();
         });
     </script>
 </body>
