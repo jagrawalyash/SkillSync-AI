@@ -8,10 +8,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* --- Layout Fix for Footer --- */
+        html, body {
+            height: 100%;
+        }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
+            display: flex;
+            flex-direction: column;
         }
+        .content-wrapper {
+            flex-grow: 1;
+        }
+        /* --- End Layout Fix --- */
+
         .gradient-text {
             background: -webkit-linear-gradient(45deg, #4f46e5, #7c3aed);
             -webkit-background-clip: text;
@@ -94,93 +105,96 @@
         <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
             <div class="text-2xl font-bold gradient-text">SkillSync AI</div>
             <div class="flex items-center space-x-2 bg-gray-100 p-1 rounded-full">
-                <a class="nav-link active" data-page="deploy">Deploy</a>
+                <a class="nav-link active" data-page="dashboard">Dashboard</a>
+                <a class="nav-link" data-page="deploy">Deploy</a>
                 <a class="nav-link" data-page="projects">Projects</a>
                 <a class="nav-link" data-page="associates">All Associates</a>
-                <a class="nav-link" data-page="dashboard">Dashboard</a>
             </div>
         </nav>
     </header>
 
-    <!-- Deploy Page -->
-    <main id="deploy" class="page active">
-        <section class="container mx-auto px-6 py-12">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Left Column: Search & Results -->
-                <div class="lg:col-span-2">
-                    <div class="w-full bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
-                        <h2 class="text-3xl font-bold text-center mb-2">Find & Deploy Talent</h2>
-                        <p class="text-center text-gray-500 mb-8">Enter project requirements to find the best-fit associates.</p>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <input id="skillInput" type="text" placeholder="Required Skill (e.g., Python, AI)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                            <input id="domainInput" type="text" placeholder="Domain (e.g., Fintech)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                            <button id="findBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">Find Associates</button>
+    <!-- This wrapper will grow to push the footer down -->
+    <div class="content-wrapper">
+        <!-- Dashboard Page -->
+        <main id="dashboard" class="page active">
+            <section class="container mx-auto px-6 py-12">
+                <h2 class="text-3xl font-bold text-center mb-8">Organizational Skills Dashboard</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Left Column: Impact Metrics -->
+                    <div class="lg:col-span-1">
+                         <div class="w-full bg-white p-8 rounded-2xl shadow-2xl border border-gray-200 h-full flex flex-col">
+                            <h3 class="text-2xl font-bold text-center mb-6">Live Business Impact</h3>
+                            <div class="space-y-6 flex-grow flex flex-col justify-center">
+                                <div class="text-center">
+                                    <p class="text-lg text-gray-500">Operational Cost Savings</p>
+                                    <p id="costSavings" class="text-4xl font-bold text-green-600 impact-metric">$0</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-lg text-gray-500">Manual Hours Saved</p>
+                                    <p id="hoursSaved" class="text-4xl font-bold text-blue-600 impact-metric">0</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-lg text-gray-500">Project Success Uplift</p>
+                                    <p id="successUplift" class="text-4xl font-bold text-purple-600 impact-metric">0%</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-center text-gray-400 mt-8">Metrics update in real-time as you deploy associates from the 'Deploy' tab.</p>
                         </div>
-
-                        <div id="results-container" class="mt-8 space-y-4">
-                            <p id="results-placeholder" class="text-center text-gray-400">Recommendations will appear here...</p>
+                    </div>
+                    <!-- Right Column: Charts -->
+                    <div class="lg:col-span-2 space-y-8">
+                        <div class="card p-6">
+                            <h3 class="text-xl font-semibold mb-4">Top In-Demand Skills (Internal)</h3>
+                            <canvas id="topSkillsChart"></canvas>
+                        </div>
+                        <div class="card p-6">
+                            <h3 class="text-xl font-semibold mb-4">Strategic Skill Gaps</h3>
+                            <p class="text-sm text-gray-500 mb-4">Highlighting areas for targeted hiring based on market demand.</p>
+                            <div id="skill-gaps-container" class="space-y-3">
+                                <!-- JS will populate this -->
+                            </div>
                         </div>
                     </div>
                 </div>
-                <!-- Right Column: Dynamic Impact -->
-                <div class="lg:col-span-1">
-                     <div class="w-full bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
-                        <h3 class="text-2xl font-bold text-center mb-6">Live Business Impact</h3>
-                        <div class="space-y-6">
-                            <div class="text-center">
-                                <p class="text-lg text-gray-500">Operational Cost Savings</p>
-                                <p id="costSavings" class="text-4xl font-bold text-green-600 impact-metric">$0</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-lg text-gray-500">Manual Hours Saved</p>
-                                <p id="hoursSaved" class="text-4xl font-bold text-blue-600 impact-metric">0</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-lg text-gray-500">Project Success Uplift</p>
-                                <p id="successUplift" class="text-4xl font-bold text-purple-600 impact-metric">0%</p>
-                            </div>
-                        </div>
-                        <p class="text-xs text-center text-gray-400 mt-8">Metrics update in real-time as you deploy associates.</p>
+            </section>
+        </main>
+        
+        <!-- Deploy Page -->
+        <section id="deploy" class="page">
+            <div class="container mx-auto px-6 py-12">
+                <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
+                    <h2 class="text-3xl font-bold text-center mb-2">Find & Deploy Talent</h2>
+                    <p class="text-center text-gray-500 mb-8">Enter project requirements to find the best-fit associates.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <input id="skillInput" type="text" placeholder="Required Skill (e.g., Python, AI)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                        <input id="domainInput" type="text" placeholder="Domain (e.g., Fintech)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                        <button id="findBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">Find Associates</button>
+                    </div>
+
+                    <div id="results-container" class="mt-8 space-y-4">
+                        <p id="results-placeholder" class="text-center text-gray-400">Recommendations will appear here...</p>
                     </div>
                 </div>
             </div>
         </section>
-    </main>
-    
-    <!-- Projects Page -->
-    <section id="projects" class="page container mx-auto px-6 py-12">
-        <h2 class="text-3xl font-bold text-center mb-8">Active Projects</h2>
-        <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- JS will populate this section -->
-        </div>
-    </section>
 
-    <!-- All Associates Page -->
-    <section id="associates" class="page container mx-auto px-6 py-12">
-        <h2 class="text-3xl font-bold text-center mb-8">All Company Associates</h2>
-        <div id="all-associates-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- JS will populate this section -->
-        </div>
-    </section>
+        <!-- Projects Page -->
+        <section id="projects" class="page container mx-auto px-6 py-12">
+            <h2 class="text-3xl font-bold text-center mb-8">Active Projects</h2>
+            <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- JS will populate this section -->
+            </div>
+        </section>
 
-    <!-- Dashboard Page -->
-    <section id="dashboard" class="page container mx-auto px-6 py-12">
-        <h2 class="text-3xl font-bold text-center mb-8">Organizational Skills Dashboard</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="card p-6">
-                <h3 class="text-xl font-semibold mb-4">Top In-Demand Skills (Internal)</h3>
-                <canvas id="topSkillsChart"></canvas>
+        <!-- All Associates Page -->
+        <section id="associates" class="page container mx-auto px-6 py-12">
+            <h2 class="text-3xl font-bold text-center mb-8">All Company Associates</h2>
+            <div id="all-associates-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- JS will populate this section -->
             </div>
-            <div class="card p-6">
-                <h3 class="text-xl font-semibold mb-4">Strategic Skill Gaps</h3>
-                <p class="text-sm text-gray-500 mb-4">Highlighting areas for targeted hiring based on market demand.</p>
-                <div id="skill-gaps-container" class="space-y-3">
-                    <!-- JS will populate this -->
-                </div>
-            </div>
-        </div>
-    </section>
+        </section>
+    </div>
 
     <!-- Deployment Modal -->
     <div id="deployModal" class="modal-overlay">
@@ -198,7 +212,7 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-8 mt-12">
+    <footer class="bg-gray-800 text-white py-8">
         <div class="container mx-auto px-6 text-center">
             <p>&copy; 2025 SkillSync AI - TCS AI Hackathon Project</p>
         </div>
@@ -429,7 +443,7 @@
             }
 
             // Initial render for the default page
-            renderProjectsPage();
+            renderDashboard();
         });
     </script>
 </body>
