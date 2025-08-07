@@ -237,14 +237,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             // --- State & Mock Data ---
             let mockAssociates = [
-                { id: 1, name: 'Priya Sharma', skills: ['Python', 'SQL', 'AWS', 'Fintech'], match: 95, status: 'Available' },
-                { id: 2, name: 'Rohan Mehta', skills: ['Java', 'Spring', 'Azure', 'AI'], match: 88, status: 'Available' },
-                { id: 3, name: 'Anjali Rao', skills: ['Python', 'TensorFlow', 'AI', 'NLP'], match: 92, status: 'Deployed' },
-                { id: 4, name: 'Vikram Singh', skills: ['JavaScript', 'React', 'Node.js'], match: 85, status: 'Available' },
-                { id: 5, name: 'Sonia Gupta', skills: ['Project Management', 'Agile'], match: 75, status: 'Available'},
-                { id: 6, name: 'Amit Kumar', skills: ['Cybersecurity', 'Networking'], match: 25, status: 'Available' },
-                { id: 7, name: 'Deepika Das', skills: ['Python', 'AI', 'Cloud Security'], match: 98, status: 'Available' },
-                { id: 8, name: 'Karan Malhotra', skills: ['Java', 'SQL'], match: 28, status: 'Available' },
+                { id: 1, name: 'Priya Sharma', skills: ['Python', 'SQL', 'AWS', 'Fintech'], match: 95, status: 'Available', needsUpskilling: false },
+                { id: 2, name: 'Rohan Mehta', skills: ['Java', 'Spring', 'Azure', 'AI'], match: 88, status: 'Available', needsUpskilling: false },
+                { id: 3, name: 'Anjali Rao', skills: ['Python', 'TensorFlow', 'AI', 'NLP'], match: 92, status: 'Deployed', needsUpskilling: false },
+                { id: 4, name: 'Vikram Singh', skills: ['JavaScript', 'React', 'Node.js'], match: 85, status: 'Available', needsUpskilling: true },
+                { id: 5, name: 'Sonia Gupta', skills: ['Project Management', 'Agile'], match: 75, status: 'Available', needsUpskilling: true },
+                { id: 6, name: 'Amit Kumar', skills: ['Cybersecurity', 'Networking'], match: 25, status: 'Available', needsUpskilling: false },
+                { id: 7, name: 'Deepika Das', skills: ['Python', 'AI', 'Cloud Security'], match: 98, status: 'Available', needsUpskilling: false },
+                { id: 8, name: 'Karan Malhotra', skills: ['Java', 'SQL'], match: 28, status: 'Available', needsUpskilling: true },
             ];
             
             let mockProjects = [
@@ -412,6 +412,12 @@
                     const associateId = parseInt(e.target.getAttribute('data-id'));
                     openDeployModal(associateId);
                 }
+                if (e.target.classList.contains('remind-btn')) {
+                    e.target.textContent = 'Reminder Sent!';
+                    e.target.disabled = true;
+                    e.target.classList.remove('bg-yellow-400', 'hover:bg-yellow-500');
+                    e.target.classList.add('bg-green-500', 'cursor-not-allowed');
+                }
             });
 
             // --- Impact Metrics Logic ---
@@ -452,11 +458,36 @@
             function renderAllAssociates() {
                 const container = document.getElementById('all-associates-container');
                 container.innerHTML = '';
+                const allOrgSkills = new Set(mockAssociates.flatMap(a => a.skills));
+                const neededSkills = marketDemandSkills.filter(s => !allOrgSkills.has(s));
+
                 mockAssociates.forEach(associate => {
                     const card = document.createElement('div');
-                    card.className = 'card p-6';
+                    card.className = 'card p-6 relative';
                     const statusColor = associate.status === 'Available' ? 'text-green-600' : 'text-gray-500';
-                    card.innerHTML = `<div class="flex items-center justify-between mb-4"><p class="font-bold text-xl">${associate.name}</p><span class="text-sm font-semibold ${statusColor}">${associate.status}</span></div><div><p class="text-sm text-gray-600"><strong>Skills:</strong> ${associate.skills.join(', ')}</p></div>`;
+                    
+                    let upskillHTML = '';
+                    if (associate.needsUpskilling && associate.status === 'Available') {
+                        const recommendedSkill = neededSkills.length > 0 ? neededSkills[0] : 'a new skill';
+                        card.classList.add('border-2', 'border-yellow-400');
+                        upskillHTML = `
+                            <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+                                <span class="text-xs font-bold text-yellow-800 bg-yellow-100 px-2 py-1 rounded-full">Upskill Recommended: <strong class="font-extrabold">${recommendedSkill}</strong></span>
+                                <button class="remind-btn bg-yellow-400 text-white px-3 py-1 rounded-full text-sm font-semibold hover:bg-yellow-500" data-id="${associate.id}">Send Reminder</button>
+                            </div>
+                        `;
+                    }
+
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="font-bold text-xl">${associate.name}</p>
+                            <span class="text-sm font-semibold ${statusColor}">${associate.status}</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600"><strong>Skills:</strong> ${associate.skills.join(', ')}</p>
+                        </div>
+                        ${upskillHTML}
+                    `;
                     container.appendChild(card);
                 });
             }
