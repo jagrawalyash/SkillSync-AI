@@ -6,10 +6,11 @@
     <title>SkillSync AI - Intelligent Talent Deployment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* Lighter gray background */
+            background-color: #f8fafc;
         }
         .gradient-text {
             background: -webkit-linear-gradient(45deg, #4f46e5, #7c3aed);
@@ -26,10 +27,25 @@
             transform: translateY(-5px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
         }
-        #results-container .card {
-             opacity: 0;
-             transform: translateY(20px);
-             transition: opacity 0.5s ease, transform 0.5s ease;
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        .nav-link {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .nav-link.active {
+            background-color: #eef2ff;
+            color: #4f46e5;
+            font-weight: 600;
+        }
+        .nav-link:not(.active):hover {
+            background-color: #f8fafc;
         }
     </style>
 </head>
@@ -37,72 +53,64 @@
 
     <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
-        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="text-2xl font-bold gradient-text">
-                SkillSync AI
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="text-2xl font-bold gradient-text">SkillSync AI</div>
+            <div class="flex items-center space-x-2 bg-gray-100 p-1 rounded-full">
+                <a class="nav-link active" data-page="deploy">Deploy</a>
+                <a class="nav-link" data-page="associates">All Associates</a>
+                <a class="nav-link" data-page="dashboard">Dashboard</a>
             </div>
-            <a href="#demo" class="bg-indigo-600 text-white px-4 py-2 rounded-full hover:bg-indigo-700 transition">View Demo</a>
         </nav>
     </header>
 
-    <!-- Hero Section -->
-    <main class="container mx-auto px-6 py-16 text-center">
-        <h1 class="text-5xl md:text-6xl font-extrabold leading-tight">
-            Build Your Perfect Team, <span class="gradient-text">Instantly</span>.
-        </h1>
-        <p class="mt-6 text-lg text-gray-600 max-w-2xl mx-auto">
-            SkillSync AI leverages our internal talent data to intelligently match the right associate to the right project, turning resource management into a strategic advantage.
-        </p>
+    <!-- Deploy Page -->
+    <main id="deploy" class="page active">
+        <section class="container mx-auto px-6 py-12">
+            <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
+                <h2 class="text-3xl font-bold text-center mb-2">Find & Deploy Talent</h2>
+                <p class="text-center text-gray-500 mb-8">Enter project requirements to find the best-fit associates.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <input id="skillInput" type="text" placeholder="Required Skill (e.g., Python, AI)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                    <input id="domainInput" type="text" placeholder="Domain (e.g., Fintech)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                    <button id="findBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">Find Associates</button>
+                </div>
+
+                <div id="results-container" class="mt-8 space-y-4">
+                    <p id="results-placeholder" class="text-center text-gray-400">Recommendations will appear here...</p>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <!-- The Demo App -->
-    <section id="demo" class="container mx-auto px-6 py-12">
-        <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
-            <h2 class="text-3xl font-bold text-center mb-2">Live Demo</h2>
-            <p class="text-center text-gray-500 mb-8">Enter project requirements to find the best-fit associates.</p>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <input id="skillInput" type="text" placeholder="Required Skill (e.g., Python, AI)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                <input id="domainInput" type="text" placeholder="Domain (e.g., Fintech)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
-                <button id="findBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
-                    Find Associates
-                </button>
-            </div>
+    <!-- All Associates Page -->
+    <section id="associates" class="page container mx-auto px-6 py-12">
+        <h2 class="text-3xl font-bold text-center mb-8">All Company Associates</h2>
+        <div id="all-associates-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- JS will populate this section -->
+        </div>
+    </section>
 
-            <!-- Results Section -->
-            <div id="results-container" class="mt-8 space-y-4">
-                <!-- JS will populate this section -->
-                 <p id="results-placeholder" class="text-center text-gray-400">Recommendations will appear here...</p>
+    <!-- Dashboard Page -->
+    <section id="dashboard" class="page container mx-auto px-6 py-12">
+        <h2 class="text-3xl font-bold text-center mb-8">Organizational Skills Dashboard</h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold mb-4">Top In-Demand Skills (Internal)</h3>
+                <canvas id="topSkillsChart"></canvas>
+            </div>
+            <div class="card p-6">
+                <h3 class="text-xl font-semibold mb-4">Strategic Skill Gaps</h3>
+                <p class="text-sm text-gray-500 mb-4">Highlighting areas for targeted hiring based on market demand.</p>
+                <div id="skill-gaps-container" class="space-y-3">
+                    <!-- JS will populate this -->
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- How it Works Section -->
-    <section class="bg-white py-20">
-        <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center mb-12">A Smarter Workflow in 3 Steps</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-                <div class="card p-6">
-                    <div class="bg-indigo-100 text-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">1</div>
-                    <h3 class="mt-6 text-xl font-semibold">Define Need</h3>
-                    <p class="mt-2 text-gray-600">Enter the skills, domain, and requirements for your project.</p>
-                </div>
-                <div class="card p-6">
-                    <div class="bg-indigo-100 text-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">2</div>
-                    <h3 class="mt-6 text-xl font-semibold">Get Recommendations</h3>
-                    <p class="mt-2 text-gray-600">Our AI analyzes the ADC database and provides a ranked list of the best candidates.</p>
-                </div>
-                <div class="card p-6">
-                    <div class="bg-indigo-100 text-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">3</div>
-                    <h3 class="mt-6 text-xl font-semibold">Deploy with Confidence</h3>
-                    <p class="mt-2 text-gray-600">Review profiles and assemble your project team in minutes, not days.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-    
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-8">
+    <footer class="bg-gray-800 text-white py-8 mt-12">
         <div class="container mx-auto px-6 text-center">
             <p>&copy; 2025 SkillSync AI - TCS AI Hackathon Project</p>
         </div>
@@ -110,78 +118,201 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // --- State & Mock Data ---
+            let mockAssociates = [
+                { id: 1, name: 'Priya Sharma', skills: ['Python', 'SQL', 'AWS', 'Fintech'], match: 95, status: 'Available' },
+                { id: 2, name: 'Rohan Mehta', skills: ['Java', 'Spring', 'Azure', 'AI'], match: 88, status: 'Available' },
+                { id: 3, name: 'Anjali Rao', skills: ['Python', 'TensorFlow', 'AI', 'NLP'], match: 92, status: 'Deployed' },
+                { id: 4, name: 'Vikram Singh', skills: ['JavaScript', 'React', 'Node.js'], match: 85, status: 'Available' },
+                { id: 5, name: 'Sonia Gupta', skills: ['Project Management', 'Agile'], match: 75, status: 'Available'},
+                { id: 6, name: 'Amit Kumar', skills: ['Cybersecurity', 'Networking'], match: 25, status: 'Available' },
+                { id: 7, name: 'Deepika Das', skills: ['Python', 'AI', 'Cloud Security'], match: 98, status: 'Available' },
+                { id: 8, name: 'Karan Malhotra', skills: ['Java', 'SQL'], match: 28, status: 'Available' },
+            ];
+
+            const marketDemandSkills = ['GenAI', 'Cloud Security', 'Quantum Computing', 'Data Engineering'];
+
+            // --- Page Navigation ---
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    const pageId = link.getAttribute('data-page');
+                    
+                    pages.forEach(page => page.classList.remove('active'));
+                    document.getElementById(pageId).classList.add('active');
+
+                    navLinks.forEach(nav => nav.classList.remove('active'));
+                    link.classList.add('active');
+                    
+                    // Re-render content when switching to a page
+                    if (pageId === 'associates') renderAllAssociates();
+                    if (pageId === 'dashboard') renderDashboard();
+                });
+            });
+            
+            // --- Deploy Page Logic ---
             const findBtn = document.getElementById('findBtn');
             const resultsContainer = document.getElementById('results-container');
             const resultsPlaceholder = document.getElementById('results-placeholder');
 
-            // Mock data for demonstration
-            const mockAssociates = [
-                { name: 'Priya Sharma', skills: ['Python', 'SQL', 'AWS', 'Fintech'], match: 95, availability: 'Available Now' },
-                { name: 'Rohan Mehta', skills: ['Java', 'Spring', 'Azure', 'AI'], match: 88, availability: 'Available in 2 weeks' },
-                { name: 'Anjali Rao', skills: ['Python', 'TensorFlow', 'AI', 'NLP'], match: 92, availability: 'Available Now' },
-                { name: 'Vikram Singh', skills: ['JavaScript', 'React', 'Node.js'], match: 85, availability: 'Available in 1 week' }
-            ];
-
             findBtn.addEventListener('click', function() {
-                // --- UI Feedback ---
                 findBtn.textContent = 'Searching...';
                 findBtn.disabled = true;
-                resultsContainer.innerHTML = ''; // Clear previous results
-                if(resultsPlaceholder) resultsPlaceholder.remove();
+                resultsContainer.innerHTML = '';
+                if(resultsPlaceholder) resultsPlaceholder.style.display = 'none';
 
-                // --- Simulate API call ---
                 setTimeout(() => {
                     const skillQuery = document.getElementById('skillInput').value.toLowerCase();
-                    
-                    // Simple filtering logic for demo
-                    const filteredAssociates = mockAssociates.filter(a => 
-                        skillQuery === '' || a.skills.some(s => s.toLowerCase().includes(skillQuery))
-                    ).sort((a, b) => b.match - a.match);
+                    const filteredAssociates = mockAssociates
+                        .filter(a => skillQuery === '' || a.skills.some(s => s.toLowerCase().includes(skillQuery)))
+                        .sort((a, b) => b.match - a.match);
 
-                    // --- Render Results ---
-                    if (filteredAssociates.length > 0) {
-                        filteredAssociates.forEach((associate, index) => {
-                            const card = document.createElement('div');
-                            card.className = 'card flex items-center justify-between p-4';
-                            
-                            let matchColorClass = 'text-green-600';
-                            if (associate.match < 90) matchColorClass = 'text-yellow-600';
+                    renderSearchResults(filteredAssociates);
 
-                            card.innerHTML = `
-                                <div class="flex items-center">
-                                    <div class="bg-gray-200 h-12 w-12 rounded-full flex items-center justify-center font-bold text-gray-600 mr-4">
-                                        ${associate.name.split(' ').map(n => n[0]).join('')}
-                                    </div>
-                                    <div>
-                                        <p class="font-bold text-lg">${associate.name}</p>
-                                        <p class="text-sm text-gray-500">Skills: ${associate.skills.join(', ')}</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="font-bold text-xl ${matchColorClass}">${associate.match}% Match</p>
-                                    <p class="text-sm text-gray-500">${associate.availability}</p>
-                                </div>
-                            `;
-                            resultsContainer.appendChild(card);
-                            
-                            // Staggered animation
-                            setTimeout(() => {
-                                card.style.opacity = '1';
-                                card.style.transform = 'translateY(0)';
-                            }, index * 100);
-                        });
-                    } else {
-                        resultsContainer.innerHTML = '<p class="text-center text-gray-500">No associates found with that skill.</p>';
-                    }
-
-                    // --- Reset Button ---
                     findBtn.textContent = 'Find Associates';
                     findBtn.disabled = false;
-
-                }, 1000); // Simulate network delay
+                }, 1000);
             });
+
+            function renderSearchResults(associates) {
+                resultsContainer.innerHTML = '';
+                if (associates.length > 0) {
+                    associates.forEach(associate => {
+                        const card = document.createElement('div');
+                        card.className = 'card flex items-center justify-between p-4';
+                        
+                        let matchColorClass = 'text-green-600';
+                        if (associate.match < 90 && associate.match >= 30) matchColorClass = 'text-yellow-600';
+                        if (associate.match < 30) matchColorClass = 'text-red-600';
+
+                        const canDeploy = associate.match >= 30 && associate.status === 'Available';
+                        const deployButtonHTML = `
+                            <button class="deploy-btn bg-indigo-500 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed" 
+                                    data-id="${associate.id}" ${canDeploy ? '' : 'disabled'}>
+                                ${associate.status === 'Available' ? 'Deploy' : 'Deployed'}
+                            </button>`;
+
+                        card.innerHTML = `
+                            <div class="flex items-center">
+                                <div class="bg-gray-200 h-12 w-12 rounded-full flex items-center justify-center font-bold text-gray-600 mr-4">${associate.name.split(' ').map(n=>n[0]).join('')}</div>
+                                <div>
+                                    <p class="font-bold text-lg">${associate.name}</p>
+                                    <p class="text-sm text-gray-500">Skills: ${associate.skills.join(', ')}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-6">
+                                <div class="text-right">
+                                    <p class="font-bold text-xl ${matchColorClass}">${associate.match}% Match</p>
+                                    <p class="text-sm text-gray-500">${associate.status}</p>
+                                </div>
+                                ${deployButtonHTML}
+                            </div>`;
+                        resultsContainer.appendChild(card);
+                    });
+                } else {
+                    resultsContainer.innerHTML = '<p class="text-center text-gray-500">No associates found with that skill.</p>';
+                }
+            }
+
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('deploy-btn')) {
+                    const associateId = parseInt(e.target.getAttribute('data-id'));
+                    const associate = mockAssociates.find(a => a.id === associateId);
+                    if (associate) {
+                        associate.status = 'Deployed';
+                        e.target.textContent = 'Deployed';
+                        e.target.disabled = true;
+                        // Re-render search results to reflect change
+                        const skillQuery = document.getElementById('skillInput').value.toLowerCase();
+                        const filteredAssociates = mockAssociates
+                            .filter(a => skillQuery === '' || a.skills.some(s => s.toLowerCase().includes(skillQuery)))
+                            .sort((a, b) => b.match - a.match);
+                        renderSearchResults(filteredAssociates);
+                    }
+                }
+            });
+
+            // --- All Associates Page Logic ---
+            function renderAllAssociates() {
+                const container = document.getElementById('all-associates-container');
+                container.innerHTML = '';
+                mockAssociates.forEach(associate => {
+                    const card = document.createElement('div');
+                    card.className = 'card p-6';
+                    const statusColor = associate.status === 'Available' ? 'text-green-600' : 'text-gray-500';
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="font-bold text-xl">${associate.name}</p>
+                            <span class="text-sm font-semibold ${statusColor}">${associate.status}</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600"><strong>Skills:</strong> ${associate.skills.join(', ')}</p>
+                        </div>`;
+                    container.appendChild(card);
+                });
+            }
+
+            // --- Dashboard Logic ---
+            let topSkillsChartInstance;
+            function renderDashboard() {
+                // Top Skills Chart
+                const skillCounts = mockAssociates.flatMap(a => a.skills).reduce((acc, skill) => {
+                    acc[skill] = (acc[skill] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                const sortedSkills = Object.entries(skillCounts).sort(([,a],[,b]) => b-a).slice(0, 5);
+                const labels = sortedSkills.map(item => item[0]);
+                const data = sortedSkills.map(item => item[1]);
+
+                const ctx = document.getElementById('topSkillsChart').getContext('2d');
+                if(topSkillsChartInstance) {
+                    topSkillsChartInstance.destroy();
+                }
+                topSkillsChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Number of Associates',
+                            data: data,
+                            backgroundColor: 'rgba(79, 70, 229, 0.8)',
+                            borderColor: 'rgba(79, 70, 229, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        scales: { y: { beginAtZero: true } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+
+                // Skill Gaps
+                const gapsContainer = document.getElementById('skill-gaps-container');
+                gapsContainer.innerHTML = '';
+                const allOrgSkills = new Set(mockAssociates.flatMap(a => a.skills));
+                
+                marketDemandSkills.forEach(skill => {
+                    const hasSkill = allOrgSkills.has(skill);
+                    if (!hasSkill) {
+                        const gapElement = document.createElement('div');
+                        gapElement.className = 'flex justify-between items-center bg-red-50 p-3 rounded-lg';
+                        gapElement.innerHTML = `
+                            <span class="font-semibold text-red-800">${skill}</span>
+                            <span class="text-xs font-bold text-red-500 bg-red-100 px-2 py-1 rounded-full">HIRING GAP</span>
+                        `;
+                        gapsContainer.appendChild(gapElement);
+                    }
+                });
+            }
+
+            // Initial render for the default page
+            renderAllAssociates();
+            renderDashboard();
         });
     </script>
-
 </body>
 </html>
