@@ -47,6 +47,37 @@
         .nav-link:not(.active):hover {
             background-color: #f8fafc;
         }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 500px;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -57,6 +88,7 @@
             <div class="text-2xl font-bold gradient-text">SkillSync AI</div>
             <div class="flex items-center space-x-2 bg-gray-100 p-1 rounded-full">
                 <a class="nav-link active" data-page="deploy">Deploy</a>
+                <a class="nav-link" data-page="projects">Projects</a>
                 <a class="nav-link" data-page="associates">All Associates</a>
                 <a class="nav-link" data-page="dashboard">Dashboard</a>
             </div>
@@ -82,6 +114,14 @@
             </div>
         </section>
     </main>
+    
+    <!-- Projects Page -->
+    <section id="projects" class="page container mx-auto px-6 py-12">
+        <h2 class="text-3xl font-bold text-center mb-8">Active Projects</h2>
+        <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- JS will populate this section -->
+        </div>
+    </section>
 
     <!-- All Associates Page -->
     <section id="associates" class="page container mx-auto px-6 py-12">
@@ -109,6 +149,21 @@
         </div>
     </section>
 
+    <!-- Deployment Modal -->
+    <div id="deployModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold mb-4">Deploy Associate</h3>
+            <p class="mb-2">Select a project to deploy <strong id="modalAssociateName"></strong> to:</p>
+            <select id="projectSelector" class="w-full p-3 border border-gray-300 rounded-lg mb-6">
+                <!-- JS will populate this -->
+            </select>
+            <div class="flex justify-end space-x-4">
+                <button id="cancelDeployBtn" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300">Cancel</button>
+                <button id="confirmDeployBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700">Confirm Deploy</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-8 mt-12">
         <div class="container mx-auto px-6 text-center">
@@ -129,8 +184,15 @@
                 { id: 7, name: 'Deepika Das', skills: ['Python', 'AI', 'Cloud Security'], match: 98, status: 'Available' },
                 { id: 8, name: 'Karan Malhotra', skills: ['Java', 'SQL'], match: 28, status: 'Available' },
             ];
+            
+            let mockProjects = [
+                { id: 'proj-001', name: 'Project Phoenix (Fintech)', assignedAssociates: [3] },
+                { id: 'proj-002', name: 'Project Titan (AI Platform)', assignedAssociates: [] },
+                { id: 'proj-003', name: 'Project Nebula (Cloud Migration)', assignedAssociates: [] }
+            ];
 
             const marketDemandSkills = ['GenAI', 'Cloud Security', 'Quantum Computing', 'Data Engineering'];
+            let associateToDeployId = null;
 
             // --- Page Navigation ---
             const navLinks = document.querySelectorAll('.nav-link');
@@ -139,25 +201,28 @@
             navLinks.forEach(link => {
                 link.addEventListener('click', () => {
                     const pageId = link.getAttribute('data-page');
-                    
                     pages.forEach(page => page.classList.remove('active'));
                     document.getElementById(pageId).classList.add('active');
-
                     navLinks.forEach(nav => nav.classList.remove('active'));
                     link.classList.add('active');
                     
-                    // Re-render content when switching to a page
                     if (pageId === 'associates') renderAllAssociates();
                     if (pageId === 'dashboard') renderDashboard();
+                    if (pageId === 'projects') renderProjectsPage();
                 });
             });
             
-            // --- Deploy Page Logic ---
+            // --- Deploy Page & Modal Logic ---
             const findBtn = document.getElementById('findBtn');
             const resultsContainer = document.getElementById('results-container');
             const resultsPlaceholder = document.getElementById('results-placeholder');
+            const deployModal = document.getElementById('deployModal');
+            const cancelDeployBtn = document.getElementById('cancelDeployBtn');
+            const confirmDeployBtn = document.getElementById('confirmDeployBtn');
+            const modalAssociateName = document.getElementById('modalAssociateName');
+            const projectSelector = document.getElementById('projectSelector');
 
-            findBtn.addEventListener('click', function() {
+            findBtn.addEventListener('click', () => {
                 findBtn.textContent = 'Searching...';
                 findBtn.disabled = true;
                 resultsContainer.innerHTML = '';
@@ -168,9 +233,7 @@
                     const filteredAssociates = mockAssociates
                         .filter(a => skillQuery === '' || a.skills.some(s => s.toLowerCase().includes(skillQuery)))
                         .sort((a, b) => b.match - a.match);
-
                     renderSearchResults(filteredAssociates);
-
                     findBtn.textContent = 'Find Associates';
                     findBtn.disabled = false;
                 }, 1000);
@@ -188,51 +251,87 @@
                         if (associate.match < 30) matchColorClass = 'text-red-600';
 
                         const canDeploy = associate.match >= 30 && associate.status === 'Available';
-                        const deployButtonHTML = `
-                            <button class="deploy-btn bg-indigo-500 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed" 
-                                    data-id="${associate.id}" ${canDeploy ? '' : 'disabled'}>
-                                ${associate.status === 'Available' ? 'Deploy' : 'Deployed'}
-                            </button>`;
+                        const deployButtonHTML = `<button class="deploy-btn bg-indigo-500 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed" data-id="${associate.id}" ${canDeploy ? '' : 'disabled'}>${associate.status === 'Available' ? 'Deploy' : 'Deployed'}</button>`;
 
-                        card.innerHTML = `
-                            <div class="flex items-center">
-                                <div class="bg-gray-200 h-12 w-12 rounded-full flex items-center justify-center font-bold text-gray-600 mr-4">${associate.name.split(' ').map(n=>n[0]).join('')}</div>
-                                <div>
-                                    <p class="font-bold text-lg">${associate.name}</p>
-                                    <p class="text-sm text-gray-500">Skills: ${associate.skills.join(', ')}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-6">
-                                <div class="text-right">
-                                    <p class="font-bold text-xl ${matchColorClass}">${associate.match}% Match</p>
-                                    <p class="text-sm text-gray-500">${associate.status}</p>
-                                </div>
-                                ${deployButtonHTML}
-                            </div>`;
+                        card.innerHTML = `<div class="flex items-center"><div class="bg-gray-200 h-12 w-12 rounded-full flex items-center justify-center font-bold text-gray-600 mr-4">${associate.name.split(' ').map(n=>n[0]).join('')}</div><div><p class="font-bold text-lg">${associate.name}</p><p class="text-sm text-gray-500">Skills: ${associate.skills.join(', ')}</p></div></div><div class="flex items-center space-x-6"><div class="text-right"><p class="font-bold text-xl ${matchColorClass}">${associate.match}% Match</p><p class="text-sm text-gray-500">${associate.status}</p></div>${deployButtonHTML}</div>`;
                         resultsContainer.appendChild(card);
                     });
                 } else {
                     resultsContainer.innerHTML = '<p class="text-center text-gray-500">No associates found with that skill.</p>';
                 }
             }
+            
+            function openDeployModal(associateId) {
+                associateToDeployId = associateId;
+                const associate = mockAssociates.find(a => a.id === associateId);
+                modalAssociateName.textContent = associate.name;
+                
+                projectSelector.innerHTML = '';
+                mockProjects.forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = project.name;
+                    projectSelector.appendChild(option);
+                });
+                
+                deployModal.classList.add('active');
+            }
 
-            document.addEventListener('click', function(e) {
-                if (e.target.classList.contains('deploy-btn')) {
-                    const associateId = parseInt(e.target.getAttribute('data-id'));
-                    const associate = mockAssociates.find(a => a.id === associateId);
-                    if (associate) {
+            function closeDeployModal() {
+                deployModal.classList.remove('active');
+                associateToDeployId = null;
+            }
+
+            cancelDeployBtn.addEventListener('click', closeDeployModal);
+            confirmDeployBtn.addEventListener('click', () => {
+                if (associateToDeployId) {
+                    const projectId = projectSelector.value;
+                    const project = mockProjects.find(p => p.id === projectId);
+                    const associate = mockAssociates.find(a => a.id === associateToDeployId);
+                    
+                    if (project && associate) {
+                        project.assignedAssociates.push(associate.id);
                         associate.status = 'Deployed';
-                        e.target.textContent = 'Deployed';
-                        e.target.disabled = true;
-                        // Re-render search results to reflect change
-                        const skillQuery = document.getElementById('skillInput').value.toLowerCase();
-                        const filteredAssociates = mockAssociates
-                            .filter(a => skillQuery === '' || a.skills.some(s => s.toLowerCase().includes(skillQuery)))
-                            .sort((a, b) => b.match - a.match);
-                        renderSearchResults(filteredAssociates);
                     }
+                    
+                    closeDeployModal();
+                    // Re-render search results to reflect change
+                    const skillQuery = document.getElementById('skillInput').value.toLowerCase();
+                    const filteredAssociates = mockAssociates.filter(a => skillQuery === '' || a.skills.some(s => s.toLowerCase().includes(skillQuery))).sort((a, b) => b.match - a.match);
+                    renderSearchResults(filteredAssociates);
                 }
             });
+
+            document.addEventListener('click', e => {
+                if (e.target.classList.contains('deploy-btn')) {
+                    const associateId = parseInt(e.target.getAttribute('data-id'));
+                    openDeployModal(associateId);
+                }
+            });
+
+            // --- Projects Page Logic ---
+            function renderProjectsPage() {
+                const container = document.getElementById('projects-container');
+                container.innerHTML = '';
+                mockProjects.forEach(project => {
+                    const card = document.createElement('div');
+                    card.className = 'card p-6';
+                    const assignedNames = project.assignedAssociates
+                        .map(id => mockAssociates.find(a => a.id === id)?.name)
+                        .filter(Boolean); // Filter out any undefined names
+                    
+                    card.innerHTML = `
+                        <h3 class="font-bold text-xl mb-4">${project.name}</h3>
+                        <div class="space-y-2">
+                            <h4 class="font-semibold text-sm text-gray-600">Assigned Team:</h4>
+                            ${assignedNames.length > 0 ? 
+                                `<ul class="list-disc list-inside text-gray-700">${assignedNames.map(name => `<li>${name}</li>`).join('')}</ul>` : 
+                                '<p class="text-sm text-gray-400">No associates assigned yet.</p>'
+                            }
+                        </div>`;
+                    container.appendChild(card);
+                });
+            }
 
             // --- All Associates Page Logic ---
             function renderAllAssociates() {
@@ -242,14 +341,7 @@
                     const card = document.createElement('div');
                     card.className = 'card p-6';
                     const statusColor = associate.status === 'Available' ? 'text-green-600' : 'text-gray-500';
-                    card.innerHTML = `
-                        <div class="flex items-center justify-between mb-4">
-                            <p class="font-bold text-xl">${associate.name}</p>
-                            <span class="text-sm font-semibold ${statusColor}">${associate.status}</span>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600"><strong>Skills:</strong> ${associate.skills.join(', ')}</p>
-                        </div>`;
+                    card.innerHTML = `<div class="flex items-center justify-between mb-4"><p class="font-bold text-xl">${associate.name}</p><span class="text-sm font-semibold ${statusColor}">${associate.status}</span></div><div><p class="text-sm text-gray-600"><strong>Skills:</strong> ${associate.skills.join(', ')}</p></div>`;
                     container.appendChild(card);
                 });
             }
@@ -257,61 +349,34 @@
             // --- Dashboard Logic ---
             let topSkillsChartInstance;
             function renderDashboard() {
-                // Top Skills Chart
-                const skillCounts = mockAssociates.flatMap(a => a.skills).reduce((acc, skill) => {
-                    acc[skill] = (acc[skill] || 0) + 1;
-                    return acc;
-                }, {});
-                
+                const skillCounts = mockAssociates.flatMap(a => a.skills).reduce((acc, skill) => { acc[skill] = (acc[skill] || 0) + 1; return acc; }, {});
                 const sortedSkills = Object.entries(skillCounts).sort(([,a],[,b]) => b-a).slice(0, 5);
                 const labels = sortedSkills.map(item => item[0]);
                 const data = sortedSkills.map(item => item[1]);
 
                 const ctx = document.getElementById('topSkillsChart').getContext('2d');
-                if(topSkillsChartInstance) {
-                    topSkillsChartInstance.destroy();
-                }
+                if(topSkillsChartInstance) topSkillsChartInstance.destroy();
                 topSkillsChartInstance = new Chart(ctx, {
                     type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Number of Associates',
-                            data: data,
-                            backgroundColor: 'rgba(79, 70, 229, 0.8)',
-                            borderColor: 'rgba(79, 70, 229, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        scales: { y: { beginAtZero: true } },
-                        plugins: { legend: { display: false } }
-                    }
+                    data: { labels, datasets: [{ label: 'Number of Associates', data, backgroundColor: 'rgba(79, 70, 229, 0.8)', borderColor: 'rgba(79, 70, 229, 1)', borderWidth: 1 }] },
+                    options: { indexAxis: 'y', scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
                 });
 
-                // Skill Gaps
                 const gapsContainer = document.getElementById('skill-gaps-container');
                 gapsContainer.innerHTML = '';
                 const allOrgSkills = new Set(mockAssociates.flatMap(a => a.skills));
-                
                 marketDemandSkills.forEach(skill => {
-                    const hasSkill = allOrgSkills.has(skill);
-                    if (!hasSkill) {
+                    if (!allOrgSkills.has(skill)) {
                         const gapElement = document.createElement('div');
                         gapElement.className = 'flex justify-between items-center bg-red-50 p-3 rounded-lg';
-                        gapElement.innerHTML = `
-                            <span class="font-semibold text-red-800">${skill}</span>
-                            <span class="text-xs font-bold text-red-500 bg-red-100 px-2 py-1 rounded-full">HIRING GAP</span>
-                        `;
+                        gapElement.innerHTML = `<span class="font-semibold text-red-800">${skill}</span><span class="text-xs font-bold text-red-500 bg-red-100 px-2 py-1 rounded-full">HIRING GAP</span>`;
                         gapsContainer.appendChild(gapElement);
                     }
                 });
             }
 
             // Initial render for the default page
-            renderAllAssociates();
-            renderDashboard();
+            renderProjectsPage();
         });
     </script>
 </body>
