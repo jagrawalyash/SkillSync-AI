@@ -78,6 +78,13 @@
         .modal-overlay.active .modal-content {
             transform: scale(1);
         }
+        .impact-metric {
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+        .impact-metric.updated {
+            transform: scale(1.1);
+            color: #16a34a; /* Green */
+        }
     </style>
 </head>
 <body class="text-gray-800">
@@ -98,18 +105,44 @@
     <!-- Deploy Page -->
     <main id="deploy" class="page active">
         <section class="container mx-auto px-6 py-12">
-            <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
-                <h2 class="text-3xl font-bold text-center mb-2">Find & Deploy Talent</h2>
-                <p class="text-center text-gray-500 mb-8">Enter project requirements to find the best-fit associates.</p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <input id="skillInput" type="text" placeholder="Required Skill (e.g., Python, AI)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                    <input id="domainInput" type="text" placeholder="Domain (e.g., Fintech)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
-                    <button id="findBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">Find Associates</button>
-                </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column: Search & Results -->
+                <div class="lg:col-span-2">
+                    <div class="w-full bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
+                        <h2 class="text-3xl font-bold text-center mb-2">Find & Deploy Talent</h2>
+                        <p class="text-center text-gray-500 mb-8">Enter project requirements to find the best-fit associates.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <input id="skillInput" type="text" placeholder="Required Skill (e.g., Python, AI)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                            <input id="domainInput" type="text" placeholder="Domain (e.g., Fintech)" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 transition">
+                            <button id="findBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">Find Associates</button>
+                        </div>
 
-                <div id="results-container" class="mt-8 space-y-4">
-                    <p id="results-placeholder" class="text-center text-gray-400">Recommendations will appear here...</p>
+                        <div id="results-container" class="mt-8 space-y-4">
+                            <p id="results-placeholder" class="text-center text-gray-400">Recommendations will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right Column: Dynamic Impact -->
+                <div class="lg:col-span-1">
+                     <div class="w-full bg-white p-8 rounded-2xl shadow-2xl border border-gray-200">
+                        <h3 class="text-2xl font-bold text-center mb-6">Live Business Impact</h3>
+                        <div class="space-y-6">
+                            <div class="text-center">
+                                <p class="text-lg text-gray-500">Operational Cost Savings</p>
+                                <p id="costSavings" class="text-4xl font-bold text-green-600 impact-metric">$0</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-lg text-gray-500">Manual Hours Saved</p>
+                                <p id="hoursSaved" class="text-4xl font-bold text-blue-600 impact-metric">0</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-lg text-gray-500">Project Success Uplift</p>
+                                <p id="successUplift" class="text-4xl font-bold text-purple-600 impact-metric">0%</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-center text-gray-400 mt-8">Metrics update in real-time as you deploy associates.</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -193,6 +226,14 @@
 
             const marketDemandSkills = ['GenAI', 'Cloud Security', 'Quantum Computing', 'Data Engineering'];
             let associateToDeployId = null;
+
+            // --- Dynamic Impact State ---
+            let impactMetrics = {
+                costSavings: 0,
+                hoursSaved: 0,
+                successUplift: 0,
+                deployments: 0
+            };
 
             // --- Page Navigation ---
             const navLinks = document.querySelectorAll('.nav-link');
@@ -292,10 +333,10 @@
                     if (project && associate) {
                         project.assignedAssociates.push(associate.id);
                         associate.status = 'Deployed';
+                        updateImpactMetrics();
                     }
                     
                     closeDeployModal();
-                    // Re-render search results to reflect change
                     const skillQuery = document.getElementById('skillInput').value.toLowerCase();
                     const filteredAssociates = mockAssociates.filter(a => skillQuery === '' || a.skills.some(s => s.toLowerCase().includes(skillQuery))).sort((a, b) => b.match - a.match);
                     renderSearchResults(filteredAssociates);
@@ -309,6 +350,29 @@
                 }
             });
 
+            // --- Impact Metrics Logic ---
+            function updateImpactMetrics() {
+                impactMetrics.deployments++;
+                // Simple calculation for demo purposes
+                impactMetrics.costSavings += 5000 + Math.floor(Math.random() * 2000); // Base saving + random factor
+                impactMetrics.hoursSaved += 8;
+                impactMetrics.successUplift = Math.min(100, impactMetrics.successUplift + 2);
+
+                const costEl = document.getElementById('costSavings');
+                const hoursEl = document.getElementById('hoursSaved');
+                const successEl = document.getElementById('successUplift');
+
+                costEl.textContent = `$${impactMetrics.costSavings.toLocaleString()}`;
+                hoursEl.textContent = impactMetrics.hoursSaved;
+                successEl.textContent = `${impactMetrics.successUplift}%`;
+
+                // Animate the update
+                [costEl, hoursEl, successEl].forEach(el => {
+                    el.classList.add('updated');
+                    setTimeout(() => el.classList.remove('updated'), 500);
+                });
+            }
+
             // --- Projects Page Logic ---
             function renderProjectsPage() {
                 const container = document.getElementById('projects-container');
@@ -316,19 +380,8 @@
                 mockProjects.forEach(project => {
                     const card = document.createElement('div');
                     card.className = 'card p-6';
-                    const assignedNames = project.assignedAssociates
-                        .map(id => mockAssociates.find(a => a.id === id)?.name)
-                        .filter(Boolean); // Filter out any undefined names
-                    
-                    card.innerHTML = `
-                        <h3 class="font-bold text-xl mb-4">${project.name}</h3>
-                        <div class="space-y-2">
-                            <h4 class="font-semibold text-sm text-gray-600">Assigned Team:</h4>
-                            ${assignedNames.length > 0 ? 
-                                `<ul class="list-disc list-inside text-gray-700">${assignedNames.map(name => `<li>${name}</li>`).join('')}</ul>` : 
-                                '<p class="text-sm text-gray-400">No associates assigned yet.</p>'
-                            }
-                        </div>`;
+                    const assignedNames = project.assignedAssociates.map(id => mockAssociates.find(a => a.id === id)?.name).filter(Boolean);
+                    card.innerHTML = `<h3 class="font-bold text-xl mb-4">${project.name}</h3><div class="space-y-2"><h4 class="font-semibold text-sm text-gray-600">Assigned Team:</h4>${assignedNames.length > 0 ? `<ul class="list-disc list-inside text-gray-700">${assignedNames.map(name => `<li>${name}</li>`).join('')}</ul>` : '<p class="text-sm text-gray-400">No associates assigned yet.</p>'}</div>`;
                     container.appendChild(card);
                 });
             }
